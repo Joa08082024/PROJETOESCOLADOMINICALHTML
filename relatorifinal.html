@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Ofertas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .classe-container {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input, select, button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Sistema de Registro de Ofertas</h1>
+
+    <div class="classe-container">
+        <h2>Registrar Oferta</h2>
+        <label for="classe">Selecione a Classe:</label>
+        <select id="classe">
+            <option value="CORDEIRINHOSDECRISTO">Cordeirinhos de Cristo</option>
+            <option value="OFERTASESTRELADAMANHA">Estrela da Manhã</option>
+            <option value="OFERTASHEROISDAFE">Heróis da Fé</option>
+            <option value="OFERTASLIRIODOSVALES">Lírio dos Vales</option>
+            <option value="OFERTASSEMENTINHAS">Sementinhas</option>
+        </select>
+
+        <br>
+        <label for="valor">Valor da Oferta (R$):</label>
+        <input type="number" id="valor" placeholder="Digite o valor">
+
+        <br>
+        <button onclick="enviarOferta()">Enviar Oferta</button>
+        <p id="mensagem"></p>
+    </div>
+
+    <script>
+        const urlAPI = "https://script.google.com/macros/s/AKfycbwQhslaYXlaja2iJKy59msqQPETgBpJIctFywcVd2foQ6HpMNItZtKJxOvih8nXrwo4/exec";
+
+        function enviarOferta() {
+            const classe = document.getElementById('classe').value;
+            const valorOferta = document.getElementById('valor').value;
+            const mensagem = document.getElementById('mensagem');
+
+            if (!valorOferta || valorOferta <= 0) {
+                mensagem.textContent = "Por favor, insira um valor válido.";
+                return;
+            }
+
+            fetch(urlAPI, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ classe, valorOferta })
+            })
+            .then(response => response.text())
+            .then(data => {
+                mensagem.textContent = data;
+                document.getElementById('valor').value = ''; // Limpa o campo de valor
+            })
+            .catch(error => {
+                mensagem.textContent = "Erro ao enviar a oferta: " + error;
+            });
+        }
+    </script>
+
+</body>
+</html>

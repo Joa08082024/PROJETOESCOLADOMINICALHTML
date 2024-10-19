@@ -1,0 +1,18 @@
+{
+  "name": "projetoescoladominicalhtml",
+  "version": "1.0.0",
+  "description": "npm install -g @google/clasp",
+  "main": "index.js",
+  "scripts": {
+    "test": "clasp login"
+  },
+  "repository": {
+    "type": "git",
+    "url": " \"idDoProjeto\" pela ID do seu projeto"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/google-apps-script": "^1.0.84"
+  }
+}

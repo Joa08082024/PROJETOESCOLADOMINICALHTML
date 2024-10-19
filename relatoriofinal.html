@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Presença</title>
+    <style>
+        .container {
+            padding: 20px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .button {
+            margin: 5px;
+            padding: 10px;
+            cursor: pointer;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .summary-section {
+            margin-top: 20px;
+        }
+        .summary-section input {
+            margin-left: 10px;
+            padding: 5px;
+        }
+        .date-section {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Controle de Presença</h1>
+        <button onclick="toggleClassesSection()">Selecionar Classe</button>
+        <!-- Botão para acessar o relatório final -->
+        <button onclick="window.location.href='relatoriofinal.html'" class="button">Relatório Final</button>
+
+        <div id="classesSection" style="display:none;">
+            <select id="classSelector" onchange="changeTab()">
+                <option value="CORDEIRINHOS">CORDEIRINHOS</option>
+                <option value="HEROIS">HEROIS</option>
+                <option value="LIRIO">LIRIO</option>
+                <option value="ESTRELA">ESTRELA</option>
+                <option value="SEMENTINHAS">SEMENTINHAS</option>
+            </select>
+
+            <div id="CORDEIRINHOS" class="tab-content active"></div>
+            <div id="HEROIS" class="tab-content"></div>
+            <div id="LIRIO" class="tab-content"></div>
+            <div id="ESTRELA" class="tab-content"></div>
+            <div id="SEMENTINHAS" class="tab-content"></div>
+        </div>
+
+        <div id="container" class="container"></div>
+    </div>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        const statusAlunosPorClasse = {
+            CORDEIRINHOS: {},
+            HEROIS: {},
+            LIRIO: {},
+            ESTRELA: {},
+            SEMENTINHAS: {}
+        };
+
+        let presentesPorClasse = {
+            CORDEIRINHOS: 0,
+            HEROIS: 0,
+            LIRIO: 0,
+            ESTRELA: 0,
+            SEMENTINHAS: 0
+        };
+
+        let ausentesPorClasse = {
+            CORDEIRINHOS: 0,
+            HEROIS: 0,
+            LIRIO: 0,
+            ESTRELA: 0,
+            SEMENTINHAS: 0
+        };
+
+        function toggleClassesSection() {
+            const section = document.getElementById('classesSection');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            if (section.style.display === 'block') {
+                changeTab(); // Carregar a aba inicial quando a seção é exibida
+            }
+        }
+
+        function changeTab() {
+            const select = document.getElementById('classSelector');
+            const classe = select.value;
+
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            document.getElementById(classe).classList.add('active');
+            loadStudents(classe);
+        }
+
+        function loadStudents(classe) {
+            const activeTab = document.getElementById(classe);
+            activeTab.innerHTML = '';
+
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbxy784iA3y5dIMvcNISnPLC0e7JK0Jx1dUVqIXlK30tyC6P2j16vAfDJ-aQ2i9aCQGd/exec';
+
+            fetch(scriptURL + '?classe=' + classe)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data[classe]) {
+                        const totalAlunos = data[classe].length; // Total de alunos na classe
+
+                        // Atualizar a aba com o número de matriculados
+                        const tabElement = document.querySelector(`#classSelector option[value="${classe}"]`);
+                        tabElement.innerHTML = `${classe} - ${totalAlunos} Matriculados`;
+
+                        if (totalAlunos > 0) {
+                            const dateSection = document.createElement('div');
+                            dateSection.classList.add('date-section');
+
+                            // Adicionar área para selecionar o dia do relatório
+                            dateSection.innerHTML = `
+                                <label for="relatorio-${classe}">Dia do relatório:</label>
+                                <input type="date" id="relatorio-${classe}">
+                            `;
+                            activeTab.appendChild(dateSection);
+
+                            const table = document.createElement('table');
+                            const headerRow = document.createElement('tr');
+                            headerRow.innerHTML = `
+                                <th>ALUNO</th>
+                                <th>DATA NASCIMENTO</th>
+                                <th>PRESENTE</th>
+                                <th>AUSENTE</th>
+                            `;
+                            table.appendChild(headerRow);
+
+                            data[classe].forEach(student => {
+                                const dataFormatada = formatarData(student.dataNascimento);
+                                const dataRow = document.createElement('tr');
+
+                                dataRow.innerHTML = `
+                                    <td>${student.nome}</td>
+                                    <td>${dataFormatada}</td>
+                                    <td><button class="button button-presenca" onclick="marcarPresenca('${student.nome}', this, '${classe}')">Presença</button></td>
+                                    <td><button class="button button-ausencia" onclick="marcarAusencia('${student.nome}', this, '${classe}')">Ausente</button></td>
+                                `;
+                                table.appendChild(dataRow);
+                            });
+
+                            activeTab.appendChild(table);
+
+                            // Adicionar área para total de matriculados e oferta
+                            const summarySection = document.createElement('div');
+                            summarySection.classList.add('summary-section');
+
+                            // Obter o valor da oferta salva
+                            const ofertaSalva = localStorage.getItem(`oferta-${classe}`) || '';
+
+                            summarySection.innerHTML = `
+                                <p>Total de matriculados: ${totalAlunos}</p>
+                                <p>Presentes: <span id="presentes-${classe}">0</span></p>
+                                <p>Ausentes: <span id="ausentes-${classe}">0</span></p>
+                                <label for="oferta-${classe}">Oferta do dia:</label>
+                                <input type="number" id="oferta-${classe}" value="${ofertaSalva}" placeholder="Digite o valor da oferta" oninput="salvarOferta('${classe}')">
+                                <p id="exibir-oferta-${classe}">Valor salvo: ${ofertaSalva ? `R$ ${ofertaSalva}` : 'Nenhuma oferta salva ainda.'}</p>
+                            `;
+                            activeTab.appendChild(summarySection);
+                        }
+                    } else {
+                        console.error('Dados não encontrados para a classe:', classe);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar alunos:', error);
+                });
+        }
+
+        function salvarOferta(classe) {
+            const inputOferta = document.getElementById(`oferta-${classe}`);
+            const valorOferta = inputOferta.value;
+            localStorage.setItem(`oferta-${classe}`, valorOferta);
+
+            const exibirOferta = document.getElementById(`exibir-oferta-${classe}`);
+            exibirOferta.innerHTML = `Valor salvo: R$ ${valorOferta}`;
+        }
+
+        function formatarData(data) {
+            const partes = data.split('T')[0].split('-');
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+
+        function marcarPresenca(aluno, button, classe) {
+            if (statusAlunosPorClasse[classe][aluno] === 'ausente') {
+                ausentesPorClasse[classe]--;
+            }
+            if (statusAlunosPorClasse[classe][aluno] !== 'presente') {
+                presentesPorClasse[classe]++;
+                statusAlunosPorClasse[classe][aluno] = 'presente';
+            }
+            button.style.backgroundColor = 'yellow'; // Mudar cor ao marcar presença
+            atualizarContadores(classe);
+        }
+
+        function marcarAusencia(aluno, button, classe) {
+            if (statusAlunosPorClasse[classe][aluno] === 'presente') {
+                presentesPorClasse[classe]--;
+            }
+            if (statusAlunosPorClasse[classe][aluno] !== 'ausente') {
+                ausentesPorClasse[classe]++;
+                statusAlunosPorClasse[classe][aluno] = 'ausente';
+            }
+            button.style.backgroundColor = 'blue'; // Mudar cor ao marcar ausência
+            atualizarContadores(classe);
+        }
+
+        function atualizarContadores(classe) {
+            document.getElementById(`presentes-${classe}`).innerText = presentesPorClasse[classe];
+            document.getElementById(`ausentes-${classe}`).innerText = ausentesPorClasse[classe];
+        }
+    </script>
+</body>
+</html>

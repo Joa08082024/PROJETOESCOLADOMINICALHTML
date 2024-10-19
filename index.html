@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Formulário de Oferta</title>
+    <script>
+        function enviarDados(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            // Captura os dados do formulário
+            const classe = document.getElementById('classe').value;
+            const data = document.getElementById('data').value;
+            const valor = document.getElementById('valor').value;
+
+            // Cria o objeto de dados
+            const dados = {
+                classe: classe,
+                data: data,
+                valor: parseFloat(valor)
+            };
+
+            // Envia a requisição POST
+            fetch('https://script.google.com/macros/s/AKfycbx4bYtXM4Xcg6x9sIY7UeJSauoFTx7-jwlxFZZ7d83-mEPwB7l1Z86SRL720glIJAc/exec', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dados)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                alert(data.message); // Exibe uma mensagem de sucesso ou erro
+            })
+            .catch((error) => {
+                console.error('Erro:', error);
+                alert('Erro ao enviar os dados.');
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Cadastro de Oferta</h1>
+    <form onsubmit="enviarDados(event)">
+        <label for="classe">Classe:</label>
+        <select id="classe" required>
+            <option value="OFERTASHEROISDAFE">Heróis da Fé</option>
+            <option value="OFERTASCORDEIRIHOSDECRISTO">Cordeirinhos de Cristo</option>
+            <option value="OFERTASESTRELADAMANHA">Estrela da Manhã</option>
+            <option value="OFERTASLIRIODOSVALES">Lírio dos Vales</option>
+            <option value="OFERTASSEMENTINHAS">Sementinhas</option>
+        </select>
+        <br><br>
+        <label for="data">Data da Oferta:</label>
+        <input type="date" id="data" required>
+        <br><br>
+        <label for="valor">Valor da Oferta:</label>
+        <input type="number" id="valor" step="0.01" required>
+        <br><br>
+        <button type="submit">Enviar</button>
+    </form>
+</body>
+</html>
